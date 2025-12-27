@@ -10,7 +10,7 @@ export default function Home() {
   const { metrics, isLive } = useSocketMetrics();
 
   return (
-    <main className="flex-1 p-8 overflow-y-auto bg-red">
+    <main className="flex-1 p-8 overflow-y-auto">
       {/* 1. Header with System Status */}
       <header className="flex items-center justify-between mb-10">
         <div>
