@@ -1,0 +1,53 @@
+// components/AgentList.tsx
+"use client";
+import { useEffect, useState } from "react";
+import { api } from "../lib/api";
+import Link from "next/link";
+import { Bot, MessageSquare, Settings2, Trash2 } from "lucide-react";
+
+export function AgentList() {
+  const [agents, setAgents] = useState([]);
+
+  useEffect(() => {
+    api.getAgents().then(data => setAgents(data));
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 gap-4">
+      {agents.map((agent: any) => (
+        <div key={agent.id} className="p-5 bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 rounded-xl flex items-center justify-between transition-all group">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 bg-zinc-800 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-all">
+              <Bot size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-white text-lg">{agent.name}</h3>
+              <p className="text-zinc-500 text-sm line-clamp-1 max-w-md">{agent.systemPrompt}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+             <span className="px-3 py-1 bg-zinc-800 text-zinc-400 text-xs rounded-full border border-zinc-700">
+               {agent.model}
+             </span>
+             <Link 
+               href={`/chat/${agent.id}`}
+               className="p-2 text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
+             >
+               <MessageSquare size={20} />
+             </Link>
+             <button className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all">
+               <Trash2 size={20} />
+             </button>
+          </div>
+        </div>
+      ))}
+      
+      {agents.length === 0 && (
+        <div className="py-20 text-center border-2 border-dashed border-zinc-800 rounded-xl">
+          <p className="text-zinc-500">No agents found. Start by creating your first one!</p>
+        </div>
+      )}
+    </div>
+  );
+}
