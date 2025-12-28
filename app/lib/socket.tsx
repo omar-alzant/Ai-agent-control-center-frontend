@@ -7,7 +7,6 @@ export const socket: Socket = io(SOCKET_URL, {
   autoConnect: true,
   reconnection: true,
   reconnectionAttempts: 5,
-  // This helps prevent CORS issues during development
   withCredentials: true,
   transports: ["websocket"]
 });

@@ -1,29 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "../lib/api";
+import { useAuth } from "../context/AuthContext"; 
+
 
 export default function CreateAgentPage() {
   const router = useRouter();
+  const { user, loading } = useAuth(); 
   const [formData, setFormData] = useState({
     name: "",
     systemPrompt: "",
     model: "gpt-3.5-turbo",
   });
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await api.createAgent(formData);
       // Refresh the page/sidebar and go to the dashboard
-      router.push("/");
+      router.push("/dashboard");
       router.refresh(); 
     } catch (err) {
       alert("Failed to create agent");
     }
   };
-
+  if (loading || !user) return <div className="p-8 text-white">Loading...</div>;
   return (
     <div className="max-w-2xl mx-auto p-8">
       <h1 className="text-3xl font-bold mb-8 text-white">Configure New Agent</h1>

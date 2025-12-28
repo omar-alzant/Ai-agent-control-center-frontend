@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "./components/Sidebar";
+import { AuthProvider } from "./context/AuthContext";
+import { OfflineGuard } from "./components/OfflineGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,10 +28,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="flex h-screen bg-black">
+      <AuthProvider>
         <Sidebar />
         <div className="flex-1 overflow-auto bg-black">
-          {children}
+        <OfflineGuard>
+            {children}
+          </OfflineGuard>
         </div>
+      </AuthProvider>
       </body>
     </html>
   );
