@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { socket } from "../lib/socket";
 
 export function useSocketMetrics(agentId?: string) {
-  const [isLive, setIsLive] = useState(socket.connected);
+  // Initialize with both socket state AND browser state
+  const [isLive, setIsLive] = useState(socket.connected && typeof navigator !== 'undefined' ? navigator.onLine : false);
   const [totalTokens, setTotalTokens] = useState(0);
   const [metrics, setMetrics] = useState({
     latency: [] as { value: number; timestamp: string }[],
@@ -16,7 +17,9 @@ export function useSocketMetrics(agentId?: string) {
 
     const resetStaleTimer = () => {
       clearTimeout(staleTimer);
-      setIsLive(true);
+      // Only set live if the browser says we have internet
+      if (navigator.onLine) setIsLive(true);
+      
       staleTimer = setTimeout(() => {
         setIsLive(false);
       }, 5000);
@@ -29,15 +32,11 @@ export function useSocketMetrics(agentId?: string) {
     
     function onDisconnect() {
       setIsLive(false);
-      // Clear data on hard disconnect so charts don't show stale info
-      setMetrics({ latency: [], tokens: [] });
-      setTotalTokens(0);
       clearTimeout(staleTimer);
     }
 
     function onTelemetryUpdate(data: { type: 'latency' | 'tokens'; value: number; timestamp: string }) {
-      resetStaleTimer(); // Data received, so we are definitely live
-
+      resetStaleTimer();
       setMetrics((prev) => {
         const key = data.type;
         const newArray = [...prev[key], { value: data.value, timestamp: data.timestamp }];
@@ -50,15 +49,27 @@ export function useSocketMetrics(agentId?: string) {
       }
     }
 
-    // Attach listeners
+    // --- BROWSER OFFLINE HANDLERS ---
+    const handleBrowserOffline = () => {
+      setIsLive(false);
+      socket.disconnect(); // Explicitly stop trying until back online
+    };
+
+    const handleBrowserOnline = () => {
+      socket.connect(); // Resume connection
+    };
+
+    window.addEventListener("offline", handleBrowserOffline);
+    window.addEventListener("online", handleBrowserOnline);
+
+    // Socket listeners
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("telemetry_update", onTelemetryUpdate);
 
-    // Connection logic
-    if (!socket.connected) {
+    if (!socket.connected && navigator.onLine) {
       socket.connect();
-    } else if (agentId) {
+    } else if (agentId && socket.connected) {
       socket.emit('join_room', agentId);
     }
 
@@ -67,6 +78,8 @@ export function useSocketMetrics(agentId?: string) {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("telemetry_update", onTelemetryUpdate);
+      window.removeEventListener("offline", handleBrowserOffline);
+      window.removeEventListener("online", handleBrowserOnline);
       clearTimeout(staleTimer);
     };
   }, [agentId]); 

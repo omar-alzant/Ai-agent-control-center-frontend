@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { api } from "../lib/api";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -11,12 +12,8 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch("http://localhost:4000/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name }),
-    });
-
+    const res = await api.signup(email, password, name);
+      
     if (res.ok) {
       alert("Account created! Please login.");
       router.push("/login");

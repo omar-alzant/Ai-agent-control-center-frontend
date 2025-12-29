@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import Link from "next/link"; // Import Link for navigation
+import { api } from "../lib/api";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,11 +12,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:4000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await api.login(email, password);
       const data = await res.json();
       if (res.ok) {
         login(data.user, data.token);

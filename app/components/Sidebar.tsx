@@ -9,7 +9,8 @@ import {
   Bot,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Settings
 } from "lucide-react";
 import clsx from "clsx";
 import { api } from "../lib/api";
@@ -25,30 +26,46 @@ export function Sidebar() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [open, setOpen] = useState(false);
   const { user, loading, logout } = useAuth(); 
-
+  const [archiveCount, setArchiveCount] = useState(0);
   useEffect(() => {
-    if (!loading && user ) {
+    const handleSync = () => {
+      // 1. Refresh Active Agents
       api.getAgents()
         .then((data) => setAgents(Array.isArray(data) ? data : []))
-        .catch((err) => {
-          console.error("API Error:", err);
-          setAgents([]); 
-        });
+        .catch((err) => console.error("Sync Error:", err));
+        
+      // 2. Refresh Archive Count
+      api.getArchivedAgents()
+        .then(data => setArchiveCount(Array.isArray(data) ? data.length : 0))
+        .catch(() => setArchiveCount(0));
+    };
+  
+    // Run immediately on mount or path change
+    if (!loading && user) {
+      handleSync();
     }
-  }, [user, loading]);
-
-  if (loading) return <div className="w-64 bg-zinc-900 border-r border-zinc-800 p-4 text-zinc-500">Loading session...</div>;
+  
+    if (!loading && !user) {
+      setAgents([]);
+      setArchiveCount(0);
+      return;
+    }
+    // Set up the listener for manual triggers (like the Restore button)
+    window.addEventListener("agent-sync", handleSync);
+    
+    return () => window.removeEventListener("agent-sync", handleSync);
+  }, [user, loading, pathname]); 
+ 
+   if (loading) return <div className="w-64 bg-zinc-900 border-r border-zinc-800 p-4 text-zinc-500">Loading session...</div>;
 
   return (
     <>
-      {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center px-4 py-3 bg-zinc-900 border-b border-zinc-800">
         <button onClick={() => setOpen(true)} className="text-zinc-400 hover:text-white">
           <Menu size={22} />
         </button>
       </div>
 
-      {/* Sidebar Container */}
       <aside className={clsx(
           "fixed md:static inset-y-0 left-0 z-50 w-64 bg-zinc-900 border-r border-zinc-800",
           "transform transition-transform duration-300",
@@ -57,10 +74,9 @@ export function Sidebar() {
         )}
       >
         <div className="flex flex-col h-full p-4">
-          {/* Header */}
           <div className="flex items-center justify-between mb-8 text-white font-bold text-lg px-2">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">A</div>
+              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">AI</div>
               AgentCenter
             </div>
             <button onClick={() => setOpen(false)} className="md:hidden text-zinc-400 hover:text-white">
@@ -88,6 +104,7 @@ export function Sidebar() {
               </div>
             </div>
 
+            {user && (
             <div>
               <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold px-3 mb-2">My Agents</p>
               <div className="space-y-1">
@@ -101,8 +118,28 @@ export function Sidebar() {
                 ))}
               </div>
             </div>
+            )}
           </nav>
-
+          <div className="mt-auto border-t border-zinc-800 pt-4">
+          <Link 
+              href="/settings" 
+              onClick={() => setOpen(false)}
+              className={clsx(
+                "flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all",
+                pathname === "/settings" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Settings size={18} />
+                <span>Settings & Archive</span>
+              </div>
+              {archiveCount > 0 && (
+                <span className="bg-zinc-800 text-zinc-500 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                  {archiveCount}
+                </span>
+              )}
+            </Link>
+        </div>
           {/* User Profile / Logout */}
           <div className="mt-auto pt-4 border-t border-zinc-800 px-2">
             <p className="text-[10px] text-zinc-500 uppercase font-bold mb-2">Account</p>

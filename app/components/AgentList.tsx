@@ -2,11 +2,14 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import Link from "next/link";
-import { Bot, MessageSquare, Trash2 } from "lucide-react";
+import { Archive, Bot, MessageSquare, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function AgentList() {
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
 
   const fetchAgents = async () => {
     try {
@@ -16,6 +19,7 @@ export function AgentList() {
       console.error(err);
     } finally {
       setLoading(false);
+      router.refresh();
     }
   };
 
@@ -23,15 +27,15 @@ export function AgentList() {
     fetchAgents();
   }, []);
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+  const handleArchive = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to Archive "${name}"?`)) return;
 
     try {
-      await api.deleteAgent(id);
-      // Update local state to remove the agent without a full page reload
+      await api.archiveAgent(id);
       setAgents(prev => prev.filter(a => a.id !== id));
+      router.refresh();
     } catch (err) {
-      alert("Failed to delete agent");
+      alert("Failed to Archive agent");
     }
   };
 
@@ -57,15 +61,17 @@ export function AgentList() {
              </span>
              <Link 
                href={`/chat/${agent.id}`}
+               title="Open agent to chat"
                className="p-2 text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
              >
                <MessageSquare size={20} />
              </Link>
              <button 
-               onClick={() => handleDelete(agent.id, agent.name)}
-               className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+               onClick={() => handleArchive(agent.id, agent.name)}
+              title="Archive"
+               className="p-2 text-zinc-400 hover:text-green-500 hover:bg-cyan-500/10 rounded-lg transition-all"
              >
-               <Trash2 size={20} />
+               <Archive size={20} />
              </button>
           </div>
         </div>

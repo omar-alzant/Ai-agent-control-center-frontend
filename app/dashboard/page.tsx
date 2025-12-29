@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { AgentList } from "../components/AgentList";
 
 export default function Dashboard() {
     const { user, loading } = useAuth();
@@ -75,6 +77,16 @@ export default function Dashboard() {
                 <MetricsDashboard title="Network Latency" data={metrics.latency} color="#10b981" dataKey="value"/>
                 <MetricsDashboard title="Token Throughput" data={metrics.tokens} color="#3b82f6" dataKey="value"/>
             </div>
+
+            <section className="mt-12">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold">Active Agents</h2>
+                    <Link href="/create" className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        + New Agent
+                    </Link>
+                </div>
+                <AgentList />
+            </section>
         </main>
     );
 }
