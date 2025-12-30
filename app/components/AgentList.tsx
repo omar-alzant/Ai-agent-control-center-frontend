@@ -59,7 +59,7 @@ export function AgentList() {
              <span className="px-3 py-1 bg-zinc-800 text-zinc-400 text-xs rounded-full border border-zinc-700">
                {agent.model}
              </span>
-             <Link 
+             <Link  
                href={`/chat/${agent.id}`}
                title="Open agent to chat"
                className="p-2 text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
